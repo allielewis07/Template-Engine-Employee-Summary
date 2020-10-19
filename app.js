@@ -1,105 +1,147 @@
 const Manager = require("./lib/Manager.js");
 const Engineer = require("./lib/Engineer.js");
 const Intern = require("./lib/Intern.js");
-const inquirer = require("inquirer.js");
+const inquirer = require("inquirer");
 const path = require("path");
 const fs = require("fs");
-
 const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
-
 const render = require("./lib/htmlRenderer.js");
-const Choice = require("inquirer/lib/objects/choice");
-
-const employees = []; 
-
+const Choices = require("inquirer/lib/objects/choices");
+const teamMembers = []; 
 // Start of function
-function initApp (){
-    startHtml();
-    addMember();
-}
-
-    //Inquirer team prompts:
-    function addMember(){
-    inquirer.prompt([{
-        message:"Enter team member's name",
-        name:"name"
-    },
-    {
-        type:"list",
-        message: "choose team members role",
-        choices: [
-            "Intern",
-            "Manager",
-            "Engineer"
-        ],
-        name: "role"
-    
-    },
-    {
-        message:"Enter team member's Id",
-        name:"id"
-    },
-    {
+// Inquirer team prompts:
+function addManager (){
+    inquirer.prompt([
+        {
+        type:"input",
+        message: "what is your name?",
+        name: "name"
+        },
+        {
+        type:"input",
+        message:"what is your office number?",
+        name:"officeNumber"
+        },
+        {
+        type:"input",
         message:"Enter team member's email address",
         name:"email" 
-    }])
-    .then(function({name,role,id,email}){
-        let roleInfo= "";
-        if (roleInfo === Engineer){
-            roleInfo = "github username";
+        },
+        { 
+        type:"input",
+        message:"What is your Id number?",
+        name: "id"
         }
-        else if (roleInfo === Intern){
-            roleInfo = "school name"
-        }
-        else {
-            roleInfo ="office phone number"
+        ])
+    .then(function(response){
+        const manager = new Manager(response.name,response.id,response.email,response.officeNumber)
+        teamMembers.push(manager);
+        fs.writeFileSync(outputPath,render(teamMembers),"utf-8")
+    console.log("Team member has been created")
+    teamRole();
+        })
     }
-    }),
-    inquirer.prompt([{
-        message:"Enter team member's ${roleInfo}",
-        name:"roleInfo"
-    },
+    function addTeamMember(){
+        inquirer.prompt([
+        {type:"checkbox",
+        message:"would you like to add a new team member?",
+        choice:[yes,no],
+        name:"addTeamMembers"
+        }
+        ])
+        .then(function(addTeamMembers) {
+            let newMember;
+            if (newMember.choices === no) { return
+            } else if (role === "Intern") {
+                newMember = new Intern(name, id, email, roleInfo);
+                employees.push (newMember)
+            } else if (role === "Manager") {
+                newMember = new Manager(name, id, email, roleInfo)
+                employees.push (newMember)
+            }
+            else if (role === "Engineer"){
+                newMember = new Engineer (name, id, email, roleInfo)
+            }
+            addTeamMembers();
+        })
+    }
+function teamRole(){
+    inquirer.prompt([
+        {type: "input",
+        message: "What is your new team member's role?",
+        name: 'role'
+        }])
+        .then(function(response){
+            if (response.role === "Engineer"){
+                addEngineer();
+            }
+            else if (response.role === "Intern"){
+                addIntern();
+            }
+        })
+}
+function addEngineer (){
+    inquirer
+    .prompt([
     {
-        type:Checkbox,
-        message:"Would you like to add another team member?",
-        name:"moreMembers"
-    }
-    .then(function({roleInfo, moreMembers}){
-        let addNewMember;
-        if (role === "Engineer"){
-            addNewMember = new Engineer (name , id , email , roleInfo); 
-        } else if (role === "Intern"){
-        addNewMember = new Intern (name, id, email ,roleInfo);
-    } else (role === "Manager"){
-        addNewMember = new Manager (name, Id , email ,roleInfo);
-    }
-    employees.push(addMember);
-    addHtml(addMember)
-    then (function(){
-        if (moreMembers === "yes"){
-            addNewMember();
-        } else {
-            finishHtml();
+        type:"input",
+        message:"What is your github?",
+        name: "github"
+        },
+        {
+        type:"input",
+        message:"what is your name?",
+        name:"name"
+        },
+        {
+        type:"input",
+        message:"Enter team member's email address",
+        name:"email" 
+        },
+        { 
+        type:"input",
+        message:"What is your Id number?",
+        name: "id"
         }
+        ])
+    .then(function(response){
+        const newEngineer = new Engineer(response.name,response.id,response.email,response.github)
+        teamMembers.push(newEngineer);
+        fs.writeFileSync(outputPath,render(teamMembers),'utf-8')
+    console.log("Team member has been created")
+        })
+    }
+function addIntern(){
+    inquirer.prompt([
+        {
+            type:"input",
+            message:"what is your name?",
+            name:"name"
+            },
+        { 
+            type: "input",
+            message: "What is your id?",
+            name: "id"
+        },
+        {
+            type: "input",
+            message: "What is your email?",
+            name: "email"
+        },
+        {
+            type: "input",
+            message:"What school are you attending?",
+            name: "school"
+        }
+    ])
+    .then(function(response){
+        var newIntern = new Intern(response.name, response.id, response.email, response.school);
+        teamMembers.push(newIntern);
+        fs.writeFileSync(outputPath,render(teamMembers),'utf-8')
+        console.log("Team member has been created")
     })
-    })   
-// After the user has input all employees desired, call the `render` function (required
-// above) and pass in an array containing all employee objects; the `render` function will
-// generate and return a block of HTML including templated divs for each employee!
+}
+addManager();
+addTeamMember();
 
-// After you have your html, you're now ready to create an HTML file using the HTML
-// returned from the `render` function. Now write it to a file named `team.html` in the
-// `output` folder. You can use the variable `outputPath` above target this location.
-// Hint: you may need to check if the `output` folder exists and create it if it
-// does not.
-
-// HINT: each employee type (manager, engineer, or intern) has slightly different
-// information; write your code to ask different questions via inquirer depending on
-// employee type.
-
-// HINT: make sure to build out your classes first! Remember that your Manager, Engineer,
-// and Intern classes should all extend from a class named Employee; see the directions
-// for further information. Be sure to test out each class and verify it generates an
-// object with the correct structure and methods. This structure will be crucial in order
-// for the provided `render` function to work! ```
